@@ -78,6 +78,7 @@ test('审批独占、长正文完整、队列稳定、处理后恢复任务，�
   state = await inspect(); assert.equal(state.selectedRequestId, 'approval-b');
   child.send({ type: 'update', sessions: tasks, completed: [] });
   state = await inspect(); assert.equal(state.mode, 'compact'); assert.equal(state.visibleTaskIds.length, 12);
+  assert.equal(state.intentVisible, true);
   child.send({ type: 'toggle' });
   state = await inspect(); assert.equal(state.height, 178); assert.equal(state.runningCount, 12);
   const exit = once(child, 'exit'); child.send({ type: 'shutdown' }); assert.deepEqual(await exit, [0, null]);
@@ -90,6 +91,7 @@ test('完成窄提示复用原窗口、连续完成不叠加、自动收回并�
   const tasks = [{id:'running',title:'仍在运行',running:true}];
   child.send({type:'update',sessions:tasks,completed:[]});
   let state = await inspect();
+  assert.equal(state.intentVisible, true);
   const window = state.windowNumber;
   child.send({type:'update',sessions:tasks,completed:[{id:'done-a',title:'资料整理'}]});
   state = await inspect();
@@ -110,4 +112,19 @@ test('完成窄提示复用原窗口、连续完成不叠加、自动收回并�
   state = await inspect(); assert.equal(state.completionToast,''); assert.deepEqual(state.visibleTaskIds,[]);
   assert.equal(state.windowNumber,window); assert.equal(state.panelCount,1);
   const exit=once(child,'exit');child.send({type:'shutdown'});assert.deepEqual(await exit,[0,null]);
+});
+
+test('意图可见性：空状态不显示，有任务时判定为应显示，清空后回落', { timeout: 15_000 }, async t => {
+  const child = await start(t, ['--test-protocol']);
+  const inspect = async () => { child.send({ type: 'inspect' }); return child.next('inspection'); };
+  child.send({ type: 'update', sessions: [], completed: [] });
+  let state = await inspect();
+  assert.equal(state.intentVisible, false); assert.equal(state.panelVisible, false);
+  child.send({ type: 'update', sessions: [{ id: 'vis', title: '应显示的任务', running: true }], completed: [] });
+  state = await inspect();
+  assert.equal(state.intentVisible, true); assert.equal(state.panelVisible, false);
+  child.send({ type: 'update', sessions: [], completed: [] });
+  state = await inspect();
+  assert.equal(state.intentVisible, false);
+  const exit = once(child, 'exit'); child.send({ type: 'shutdown' }); assert.deepEqual(await exit, [0, null]);
 });

@@ -155,7 +155,7 @@ $DSH_HOME/dsh-island-bridge/island-helper.sha256 # 源码哈希缓存，源码�
 ## 开发
 
 ```bash
-npm test                      # 22 项 Node/进程/窗口/导航测试 + 50 条原生断言（需 macOS + Xcode CLT）
+npm test                      # 23 项 Node/进程/窗口/导航测试 + 50 条原生断言（需 macOS + Xcode CLT）
 npm run check                 # 只做语法检查
 npm run build:helper -- --out ./build   # 手动编译原生面板到本地 build/
 ```

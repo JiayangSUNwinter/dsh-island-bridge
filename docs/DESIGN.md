@@ -42,7 +42,7 @@
 
 ## 验证
 
-`node --test tests/*.mjs`：50条核心断言、16项进程/状态/窗口/导航测试。视觉证据与比较见design-qa.md；导航验证边界见NAVIGATION-VERIFICATION.md。
+`node --test tests/*.mjs`：50条核心断言、23项进程/状态/窗口/导航测试。原生集成测试统一在 `--test-protocol` 下运行：面板不可见、不装鼠标监听，但仍断言「有任务时应显示」的意图可见性（`intentVisible`），消噪不以牺牲覆盖为代价。视觉证据与比较见design-qa.md；导航验证边界见NAVIGATION-VERIFICATION.md。
 
 ## 动态高度与进程唯一性
 
