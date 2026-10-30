@@ -7,6 +7,8 @@
 [![Platform](https://img.shields.io/badge/platform-macOS%2014%2B-black.svg)](#环境要求)
 [![DSH](https://img.shields.io/badge/DSH-%E2%89%A50.2.1--rc.2-black.svg)](#环境要求)
 
+![审批卡停在刘海上：来源会话、完整命令正文、复制与「拒绝 / 同意一次」](assets/island-approval.png)
+
 ---
 
 ## 这解决什么问题
@@ -25,6 +27,18 @@
 | DSH 页面内浮层 | ✗ 窗口被遮挡即不可见 | ✓ | ✓ |
 | 云中继 + 手机推送 | ✓ | ✓ | ✗ 经第三方云 |
 | **本项目（原生刘海面板）** | ✓ | ✓ | ✓ 仅 stdio / 同源路由 |
+
+## 截图
+
+| 待审批 | 并行任务 |
+|---|---|
+| ![待审批：会话名、完整正文与两个裁决按钮](assets/island-approval.png) | ![两个运行中的会话](assets/island-two-tasks.png) |
+
+| 单个任务 | 完成提示 |
+|---|---|
+| ![单个运行中的任务](assets/island-one-task.png) | ![任务完成后的单行提示](assets/island-completion.png) |
+
+截图取自原生面板本身（Retina 2x）：审批时整颗岛只显示待交互内容，正文可滚动、按钮钉在底部；无待交互时显示运行会话行，会话结束后在同一个岛上出一条 24pt 完成提示。
 
 ## 特性
 
@@ -90,7 +104,7 @@ dsh plugin --profile desktop add github:JiayangSUNwinter/dsh-island-bridge
 dsh plugin --profile desktop add link:"$PWD"
 ```
 
-装完重启 DSH。`dsh plugin` 会把参数转发给 pnpm，并在成功后把包名写进 profile 的 `dsh.profile.bundles`；本包的 `cordis.patch.yml` 经 `dsh.bundle.patch` 声明，作为组合层随该 bundle 加载。
+装完重启 DSH。本仓库按 [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) 的收录要求组织（`dsh.bundle` manifest、`screenshots.json`、分类与描述），收录后也能在 DSH Market 里一键安装。`dsh plugin` 会把参数转发给 pnpm，并在成功后把包名写进 profile 的 `dsh.profile.bundles`；本包的 `cordis.patch.yml` 经 `dsh.bundle.patch` 声明，作为组合层随该 bundle 加载。
 
 <details>
 <summary>手动注册（插件列表里看不到、或宿主日志没有 <code>[island-bridge]</code> 时）</summary>
@@ -198,7 +212,7 @@ npm run build:helper -- --out ./build   # 手动编译原生面板到本地 buil
 - [展开/收起修复记录](docs/REPAIR.md)
 - [导航验证边界](docs/NAVIGATION-VERIFICATION.md)
 - [完成态与紧凑度验收](docs/design-qa.md)
-- [更新日志](CHANGELOG.md) · [贡献指南](CONTRIBUTING.md)
+- [更新日志](CHANGELOG.md) · [贡献指南](CONTRIBUTING.md) · [市场条目草稿](docs/market-entry.yml)
 
 ## 许可
 

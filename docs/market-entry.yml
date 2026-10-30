@@ -1,0 +1,10 @@
+# 提交到 awesome-dsh-plugin 的条目草稿。
+# 用法：在 awesome-dsh-plugin 仓库新增 data/plugins/JiayangSUNwinter__dsh-island-bridge.yml，
+# 内容如下（README 由 CI 生成，不要手改）。仓库需先满 1 天，且已加 dsh-plugin topic。
+url: https://github.com/JiayangSUNwinter/dsh-island-bridge
+name: JiayangSUNwinter/dsh-island-bridge
+category: notify
+icon: https://raw.githubusercontent.com/JiayangSUNwinter/dsh-island-bridge/main/assets/icon-180.png
+description:
+  en: macOS notch panel for DeepSeek Harness — running sessions and pending approvals sit above every window, permissions are decided in place, and clicking a row opens that conversation. Requires macOS 14+ and Xcode Command Line Tools.
+  zh: macOS 灵动岛桥接：运行中的会话与待审批操作浮在所有窗口之上，权限直接在岛上裁决，点一行回到对应会话。需 macOS 14+ 与 Xcode Command Line Tools。

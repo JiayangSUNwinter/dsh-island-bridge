@@ -2,6 +2,13 @@
 
 本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### 文档与素材
+
+- 补齐 `assets/` 截图（待审批、两个任务、单个任务、完成提示）与方图图标，新增 `screenshots.json` 供 DSH Market 详情页展示。
+- README 增加首图与截图小节，并说明本仓库按 awesome-dsh-plugin 的收录要求组织。
+
 ## [0.1.3] - 2026-10-30
 
 ### 修复

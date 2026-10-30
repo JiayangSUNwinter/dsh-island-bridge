@@ -4,7 +4,7 @@ final result: passed
 
 Target: user's updated rule—completion while collapsed is a thin one-sentence island, no overlapping display; closer task rows; content-driven height with the existing178pt cap. Earlier visual proposal remains the style reference; the new instruction supersedes its34pt row spacing and completion layout.
 
-Evidence: three native captures (completion strip, one task, two tasks) taken from the resolved 432×178pt canvas. The PNGs are local QA artifacts and are not distributed with this repository. Captures are864×356px of the432×178pt native canvas at2x. The visible black region is smaller than the transparent canvas. Completion has a24pt text strip below38pt safe area (62pt total); one task96pt; two124pt. Tests verify the178pt cap for long content and many tasks.
+Evidence: three native captures (completion strip, one task, two tasks) taken from the resolved 432×178pt canvas. Representative captures live in `assets/` (`island-one-task.png`, `island-two-tasks.png`, `island-completion.png`, plus `island-approval.png` for the pending-approval state) and are declared in `screenshots.json` for storefront display. Captures are864×356px of the432×178pt native canvas at2x. The visible black region is smaller than the transparent canvas. Completion has a24pt text strip below38pt safe area (62pt total); one task96pt; two124pt. Tests verify the178pt cap for long content and many tasks.
 
 Review:
 - Typography/copy:13pt task names;12pt single-line completion phrase, no duplicate header, icon or running count in the toast.
