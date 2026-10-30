@@ -90,7 +90,25 @@ dsh plugin --profile desktop add github:JiayangSUNwinter/dsh-island-bridge
 dsh plugin --profile desktop add link:"$PWD"
 ```
 
-装完重启 DSH。`dsh plugin` 会把参数转发给 pnpm，并在成功后把包名写进 profile 的 `dsh.profile.bundles`；`cordis.patch.yml` 由该 bundle 机制自动作为组合层加载，无需手改 profile。
+装完重启 DSH。`dsh plugin` 会把参数转发给 pnpm，并在成功后把包名写进 profile 的 `dsh.profile.bundles`；本包的 `cordis.patch.yml` 经 `dsh.bundle.patch` 声明，作为组合层随该 bundle 加载。
+
+<details>
+<summary>手动注册（插件列表里看不到、或宿主日志没有 <code>[island-bridge]</code> 时）</summary>
+
+以桌面 profile 为例，三处都要在，缺一不生效：
+
+1. 包目录可被解析：`~/.dsh/profiles/desktop/node_modules/dsh-island-bridge` 指向仓库（软链或 `file:` 依赖）；
+2. `~/.dsh/profiles/desktop/package.json` 的 `dsh.profile.bundles` 含 `"dsh-island-bridge"`；
+3. `~/.dsh/profiles/desktop/cordis.patch.yml` 末尾追加：
+
+   ```yaml
+   - insert:
+       - id: island-bridge
+         name: 'dsh-island-bridge'
+   ```
+
+改完重启 DSH。卸载时逆向删除这三项并重启。
+</details>
 
 安装位置与运行时文件：
 
