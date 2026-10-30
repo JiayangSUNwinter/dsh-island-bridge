@@ -61,7 +61,7 @@ flowchart LR
   CL -- "uiWorkspace.openSession" --> DSH
 ```
 
-- 桥接以 **answerer** 身份加入两条审批瀑布，拿到待交互后注册，并等待本机面板裁决；同时**与本地 UI 竞速**——本地先答就用本地结果，互不阻塞。
+- 桥接以 **answerer** 身份加入审批瀑布，岛上裁决与本地 UI 竞速，本地先答就用本地结果。提问只镜像到岛上并跳回 DSH 回答；答案、取消和超时保持 DSH 原有语义，交互结束立即清理岛上的提示。
 - 面板通过 **stdio JSON 行**与宿主机通信；helper 二进制首次运行时由 `swiftc` 编译并按源码哈希缓存。
 - 导航复用 DSH 已有的**同源、已鉴权** Fetch 通道，不新开端口、不注册公网入口。
 
@@ -155,12 +155,12 @@ $DSH_HOME/dsh-island-bridge/island-helper.sha256 # 源码哈希缓存，源码�
 ## 开发
 
 ```bash
-npm test                      # 16 项 Node/进程/窗口/导航测试 + 50 条原生断言（需 macOS + Xcode CLT）
+npm test                      # 22 项 Node/进程/窗口/导航测试 + 50 条原生断言（需 macOS + Xcode CLT）
 npm run check                 # 只做语法检查
 npm run build:helper -- --out ./build   # 手动编译原生面板到本地 build/
 ```
 
-测试直接从源码编译 helper，无第三方依赖；原生断言通过 `tests/core-regressions.swift` 注入并与面板代码同进程运行。
+测试直接从源码编译 helper，无第三方依赖；原生断言通过 `tests/core-regressions.swift` 注入并与面板代码同进程运行。原生集成测试统一使用 `--test-protocol`：保留实际模型和窗口几何检查，窗口不可见且不安装鼠标监听，不会在桌面弹出“配置检查”等测试提示或与正式岛重叠。可见演示需显式使用 `--demo`。
 
 目录结构：
 
