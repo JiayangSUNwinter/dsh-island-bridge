@@ -124,4 +124,13 @@ model.completedFlash = []
 model.sessions = []
 model.autoExpandIfNeeded()
 check(!model.hasContent, "完成提示过期后空闲岛可以隐藏")
+model.sessions = [IslandSession(id: "long-title", title: String(repeating: "完整任务标题", count: 20), running: true, pending: nil)]
+model.mode = .expanded
+check(size(model).width == 560, "长任务标题横向放宽到560pt")
+check(size(model).height == 96, "横向扩展不增加单任务高度")
+check(islandSize(model: model, notchWidth: 185, contentTop: 38, maxHeight: 178, availableWidth: 480).width == 480, "窄屏限制横向宽度")
+model.sessions = [row()]
+check(size(model).width == 392, "短标题仍使用紧凑宽度")
+model.sessions = [row("approval-width")]
+check(size(model).width == 392, "审批保持既有宽度")
 print("PASS: \(checked) native interaction regressions")

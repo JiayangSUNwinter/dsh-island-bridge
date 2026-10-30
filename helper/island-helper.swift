@@ -26,6 +26,7 @@ struct IslandApproval: Identifiable {
 enum IslandMode: String { case compact, expanded }
 enum IslandLayout {
     static let width: CGFloat = 392
+    static let taskMaxWidth: CGFloat = 560
     static let maxHeight: CGFloat = 178
     static let rowHeight: CGFloat = 28
     static let headerHeight: CGFloat = 22
@@ -158,7 +159,7 @@ func approvalBodyHeight(_ text: String) -> CGFloat {
     )
     return max(24, ceil(bounds.height) + 8)
 }
-func islandSize(model: IslandModel, notchWidth: CGFloat, contentTop: CGFloat, maxHeight: CGFloat) -> CGSize {
+func islandSize(model: IslandModel, notchWidth: CGFloat, contentTop: CGFloat, maxHeight: CGFloat, availableWidth: CGFloat = IslandLayout.taskMaxWidth) -> CGSize {
     if let toast = model.completionToast {
         let label = (toast.title.isEmpty ? "任务" : toast.title) + " 已完成"
         let textWidth = (label as NSString).size(withAttributes: [.font: NSFont.systemFont(ofSize: 12)]).width
@@ -175,7 +176,14 @@ func islandSize(model: IslandModel, notchWidth: CGFloat, contentTop: CGFloat, ma
         let count = model.visibleTasks.count + model.visibleCompletions.count
         height = contentTop + IslandLayout.headerHeight + CGFloat(max(1, count)) * IslandLayout.rowHeight + 8
     }
-    return CGSize(width: IslandLayout.width, height: min(IslandLayout.maxHeight, maxHeight, height))
+    var width = IslandLayout.width
+    if !model.hasPending {
+        let longest = (model.visibleTasks + model.visibleCompletions).map {
+            ($0.title as NSString).size(withAttributes: [.font: NSFont.systemFont(ofSize: 13)]).width
+        }.max() ?? 0
+        width = min(availableWidth, IslandLayout.taskMaxWidth, max(width, ceil(longest) + 64))
+    }
+    return CGSize(width: width, height: min(IslandLayout.maxHeight, maxHeight, height))
 }
 func islandContains(_ point: CGPoint, frame: CGRect, radius: CGFloat = 16) -> Bool {
     guard frame.contains(point) else { return false }
@@ -243,9 +251,11 @@ struct SessionRowView: View {
                 }
                 Text(row.title.isEmpty ? "未命名任务" : row.title)
                     .font(.system(size: 13)).foregroundColor(.white.opacity(0.92)).lineLimit(1)
+                    .truncationMode(.tail).layoutPriority(1)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 Image(systemName: "chevron.right").font(.system(size: 10, weight: .medium)).foregroundColor(.white.opacity(0.35))
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, IslandLayout.padding).frame(height: IslandLayout.rowHeight)
             .background(interaction.hovered ? Color.white.opacity(0.06) : Color.clear).contentShape(Rectangle())
         }.buttonStyle(.plain).onHover { interaction.hovered = $0 }.help(row.title)
@@ -353,7 +363,7 @@ struct NotchIslandView: View {
         GeometryReader { proxy in
             let expanded = model.mode == .expanded
             let top = islandContentTopInset()
-            let size = islandSize(model: model, notchWidth: islandNotchWidth(), contentTop: top, maxHeight: proxy.size.height)
+            let size = islandSize(model: model, notchWidth: islandNotchWidth(), contentTop: top, maxHeight: proxy.size.height, availableWidth: proxy.size.width - 40)
             ZStack(alignment: .top) {
                 NotchShape(topExtension: 6, bottomRadius: expanded ? 16 : 12).fill(.black).frame(width: size.width, height: size.height)
                 if let toast = model.completionToast {
@@ -460,7 +470,7 @@ final class IslandController {
             notchWidth = 185
         }
         let size = islandSize(model: model, notchWidth: notchWidth,
-                              contentTop: islandContentTopInset(), maxHeight: panel.frame.height)
+                              contentTop: islandContentTopInset(), maxHeight: panel.frame.height, availableWidth: panel.frame.width - 40)
         return CGRect(x: panel.frame.midX - size.width / 2, y: panel.frame.maxY - size.height,
                       width: size.width, height: size.height)
     }
@@ -553,15 +563,17 @@ final class IslandController {
 
     func relayout() {
         let screen = NSScreen.screens.first(where: { $0.auxiliaryTopLeftArea != nil || $0.auxiliaryTopRightArea != nil }) ?? NSScreen.main
-        guard let screen = screen else { return }
-        let frame = screen.frame
+        // Protocol tests may run without a WindowServer screen. Keep their
+        // geometry deterministic while production still waits for a real screen.
+        let frame = screen?.frame ?? (isTestProtocol ? NSRect(x: 0, y: 0, width: 1440, height: 900) : .zero)
+        guard frame.height > 0 else { return }
         let notchCenter: CGFloat
-        if let left = screen.auxiliaryTopLeftArea, let right = screen.auxiliaryTopRightArea {
+        if let screen = screen, let left = screen.auxiliaryTopLeftArea, let right = screen.auxiliaryTopRightArea {
             notchCenter = (left.maxX + right.minX) / 2
         } else {
             notchCenter = frame.midX
         }
-        let panelW: CGFloat = max(IslandLayout.width + 40, islandNotchWidth() + 76)
+        let panelW: CGFloat = min(frame.width - 24, max(IslandLayout.taskMaxWidth + 40, islandNotchWidth() + 76))
         let panelH = min(IslandLayout.maxHeight, frame.height - 60)
         let target = NSRect(x: notchCenter - panelW / 2, y: frame.maxY - panelH, width: panelW, height: panelH)
         if panel.frame != target { panel.setFrame(target, display: true) }

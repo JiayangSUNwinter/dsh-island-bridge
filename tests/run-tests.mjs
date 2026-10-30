@@ -108,6 +108,9 @@ test('完成窄提示复用原窗口、连续完成不叠加、自动收回并�
   child.send({type:'update',sessions:[...tasks,{id:'second',title:'另一个任务',running:true}],completed:[]});
   state = await inspect(); assert.equal(state.height,124);
   assert.equal(state.panelVisible,false);
+  child.send({type:'update',sessions:[{id:'long-title',title:'完整任务标题'.repeat(20),running:true}],completed:[]});
+  state = await inspect(); assert.equal(state.width,560); assert.equal(state.height,96);
+  assert.equal(state.panelVisible,false); assert.equal(state.windowNumber,window);
   child.send({type:'update',sessions:[...tasks,{id:'urgent',title:'审批来源',running:true,pending:{requestId:'urgent',kind:'permission',reason:'审批优先'}}],completed:[{id:'other',title:'不应覆盖审批'}]});
   state = await inspect(); assert.equal(state.completionToast,''); assert.deepEqual(state.visibleTaskIds,[]);
   assert.equal(state.windowNumber,window); assert.equal(state.panelCount,1);
