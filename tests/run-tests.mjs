@@ -13,7 +13,7 @@ await writeFile(root + '/build/core-regressions.swift', core + '\n' + await read
 execFileSync('swiftc', ['-module-cache-path', root + '/build/cache', '-o', root + '/build/core-regressions', root + '/build/core-regressions.swift'], { timeout: 120_000 });
 console.log(execFileSync(root + '/build/core-regressions', { encoding: 'utf8' }).trim());
 async function start(t, args = []) {
-  const child = spawn(root + '/build/island-helper', args, { stdio: ['pipe', 'pipe', 'pipe'] });
+  const child = spawn(root + '/build/island-helper', ['--test-protocol', ...args], { stdio: ['pipe', 'pipe', 'pipe'] });
   t.after(() => child.kill());
   const timer = setTimeout(() => child.kill(), 12_000);
   child.once('exit', () => clearTimeout(timer));
@@ -69,6 +69,7 @@ test('审批独占、长正文完整、队列稳定、处理后恢复任务，�
   child.send({ type: 'update', sessions: [...tasks, a, b], completed: [{ id: 'done', title: '完成的其他任务' }] });
   let state = await inspect();
   assert.equal(state.height, 178); assert.equal(state.width, 392);
+  assert.equal(state.panelVisible, false); assert.equal(state.mouseMonitorCount, 0);
   assert.deepEqual(state.visibleTaskIds, []); assert.deepEqual(state.visibleCompletionIds, []);
   assert.equal(state.runningCount, 0); assert.equal(state.body, long);
   child.send({ type: 'test-next-approval' });
@@ -94,6 +95,7 @@ test('完成窄提示复用原窗口、连续完成不叠加、自动收回并�
   state = await inspect();
   assert.equal(state.completionToast,'资料整理 已完成');
   assert.equal(state.height,62); assert.equal(state.panelCount,1); assert.equal(state.windowNumber,window);
+  assert.equal(state.panelVisible,false); assert.equal(state.mouseMonitorCount,0);
   child.send({type:'update',sessions:tasks,completed:[{id:'done-b',title:'配置检查'}]});
   state = await inspect();
   assert.equal(state.completionToast,'配置检查 已完成');
@@ -103,6 +105,7 @@ test('完成窄提示复用原窗口、连续完成不叠加、自动收回并�
   child.send({type:'toggle'}); state = await inspect(); assert.equal(state.height,96);
   child.send({type:'update',sessions:[...tasks,{id:'second',title:'另一个任务',running:true}],completed:[]});
   state = await inspect(); assert.equal(state.height,124);
+  assert.equal(state.panelVisible,false);
   child.send({type:'update',sessions:[...tasks,{id:'urgent',title:'审批来源',running:true,pending:{requestId:'urgent',kind:'permission',reason:'审批优先'}}],completed:[{id:'other',title:'不应覆盖审批'}]});
   state = await inspect(); assert.equal(state.completionToast,''); assert.deepEqual(state.visibleTaskIds,[]);
   assert.equal(state.windowNumber,window); assert.equal(state.panelCount,1);

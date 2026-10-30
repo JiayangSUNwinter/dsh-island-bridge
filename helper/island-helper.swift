@@ -1,6 +1,8 @@
-// DSH native island v7: compact layout, bounded height, approval-only presentation.
+// DSH native island v8: invisible protocol tests, compact production panel.
 import AppKit
 import SwiftUI
+
+let isTestProtocol = CommandLine.arguments.contains("--test-protocol")
 
 struct IslandPending {
     var requestId: String
@@ -428,10 +430,12 @@ final class IslandController {
                 emitJson(["type": "demo-mode", "mode": self.model.mode.rawValue, "frame": NSStringFromRect(self.islandFrame)])
             }
         }
-        installEventMonitors()
-        screenObserver = NotificationCenter.default.addObserver(
-            forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main
-        ) { [weak self] _ in self?.relayout() }
+        if !isTestProtocol {
+            installEventMonitors()
+            screenObserver = NotificationCenter.default.addObserver(
+                forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main
+            ) { [weak self] _ in self?.relayout() }
+        }
     }
 
     deinit {
@@ -440,6 +444,8 @@ final class IslandController {
         hideWork?.cancel()
         for work in completionWork.values { work.cancel() }
     }
+
+    var mouseMonitorCount: Int { monitors.count }
 
     var islandFrame: CGRect {
         let screen = NSScreen.screens.first(where: { $0.auxiliaryTopLeftArea != nil }) ?? NSScreen.main
@@ -556,6 +562,13 @@ final class IslandController {
         let target = NSRect(x: notchCenter - panelW / 2, y: frame.maxY - panelH, width: panelW, height: panelH)
         if panel.frame != target { panel.setFrame(target, display: true) }
         hideWork?.cancel()
+        // Exercise the actual model and panel geometry without putting fixture
+        // tasks over a user's running island or installing mouse monitors.
+        if isTestProtocol {
+            panel.orderOut(nil)
+            panel.ignoresMouseEvents = true
+            return
+        }
         if !model.sessions.isEmpty || !model.completedFlash.isEmpty {
             panel.orderFrontRegardless()
         } else {
@@ -599,7 +612,7 @@ func pushDemo(_ withPending: Bool, _ completed: [[String: Any]]?) {
 }
 
 let app = NSApplication.shared
-app.setActivationPolicy(.accessory)
+app.setActivationPolicy(isTestProtocol ? .prohibited : .accessory)
 
 var demoMode = CommandLine.arguments.contains("--demo")
 let sink: ([String: Any]) -> Void = { payload in
@@ -664,6 +677,8 @@ if !demoMode { stdinQueue.async {
                               "completionToast": model.completionToast.map { ($0.title.isEmpty ? "任务" : $0.title) + " 已完成" } ?? "",
                               "windowNumber": controller.panel.windowNumber,
                               "panelCount": NSApp.windows.filter { $0 is IslandPanel }.count,
+                              "panelVisible": controller.panel.isVisible,
+                              "mouseMonitorCount": controller.mouseMonitorCount,
                               "body": model.activeApproval.map { approvalText($0.pending) } ?? ""])
                 }
             } else if t == "test-next-approval", CommandLine.arguments.contains("--test-protocol") {
