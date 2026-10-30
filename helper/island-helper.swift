@@ -447,6 +447,10 @@ final class IslandController {
 
     var mouseMonitorCount: Int { monitors.count }
 
+    /// 与 relayout 相同的"该不该显示"判定。测试模式下真实面板保持不可见，
+    /// 但这条意图仍可断言——避免为了消掉测试弹窗，顺手把可见性路径的覆盖也砍掉。
+    private(set) var intendedVisible = false
+
     var islandFrame: CGRect {
         let screen = NSScreen.screens.first(where: { $0.auxiliaryTopLeftArea != nil }) ?? NSScreen.main
         let notchWidth: CGFloat
@@ -562,6 +566,8 @@ final class IslandController {
         let target = NSRect(x: notchCenter - panelW / 2, y: frame.maxY - panelH, width: panelW, height: panelH)
         if panel.frame != target { panel.setFrame(target, display: true) }
         hideWork?.cancel()
+        let shouldShow = !model.sessions.isEmpty || !model.completedFlash.isEmpty
+        intendedVisible = shouldShow
         // Exercise the actual model and panel geometry without putting fixture
         // tasks over a user's running island or installing mouse monitors.
         if isTestProtocol {
@@ -569,7 +575,7 @@ final class IslandController {
             panel.ignoresMouseEvents = true
             return
         }
-        if !model.sessions.isEmpty || !model.completedFlash.isEmpty {
+        if shouldShow {
             panel.orderFrontRegardless()
         } else {
             let work = DispatchWorkItem { [weak self] in
@@ -678,6 +684,7 @@ if !demoMode { stdinQueue.async {
                               "windowNumber": controller.panel.windowNumber,
                               "panelCount": NSApp.windows.filter { $0 is IslandPanel }.count,
                               "panelVisible": controller.panel.isVisible,
+                              "intentVisible": controller.intendedVisible,
                               "mouseMonitorCount": controller.mouseMonitorCount,
                               "body": model.activeApproval.map { approvalText($0.pending) } ?? ""])
                 }

@@ -14,6 +14,8 @@
 ### 验证
 
 - 增加提问完成、刷新不复活、后续新提问、超时、取消及审批终态的回归测试；原生测试检查面板不可见且鼠标监听数量为零。
+- 新增 `intentVisible` 断言：测试模式下真实面板仍隐藏，但「有任务/完成提示时应显示、空状态应隐藏」的判定重新纳入自动化覆盖。
+- 文档同步：`docs/DESIGN.md` 的测试计数更新为 23 项。
 
 ## [0.1.2] - 2026-10-30
 
@@ -39,6 +41,6 @@
 - 桌面端精确导航（`/api/island-navigation/wait` 与 `/ack`），单实例 helper 监督。
 - 修复展开后点岛外无法收起、手动收起被状态刷新弹开等问题。
 
-[0.1.3]: https://github.com/JiayangSUNwinter/dsh-island-bridge/compare/v0.1.2...codex/fix-stale-questions-and-test-windows
+[0.1.3]: https://github.com/JiayangSUNwinter/dsh-island-bridge/releases/tag/v0.1.3
 [0.1.2]: https://github.com/JiayangSUNwinter/dsh-island-bridge/releases/tag/v0.1.2
 [0.1.1]: https://github.com/JiayangSUNwinter/dsh-island-bridge/commits/main
