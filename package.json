@@ -1,0 +1,65 @@
+{
+  "name": "dsh-island-bridge",
+  "version": "0.1.2",
+  "description": "macOS 灵动岛桥接：把 DeepSeek Harness 的会话状态与待审批操作投影到原生 SwiftUI 刘海面板，在岛上直接裁决与跳转",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "macos",
+    "notch",
+    "dynamic-island",
+    "approval",
+    "swiftui"
+  ],
+  "license": "MIT",
+  "author": "JiayangSUNwinter",
+  "homepage": "https://github.com/JiayangSUNwinter/dsh-island-bridge#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JiayangSUNwinter/dsh-island-bridge.git"
+  },
+  "bugs": {
+    "url": "https://github.com/JiayangSUNwinter/dsh-island-bridge/issues"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json",
+    "./client": "./lib/client.js"
+  },
+  "files": [
+    "lib",
+    "helper",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "os": [
+    "darwin"
+  ],
+  "scripts": {
+    "test": "node --test tests/*.mjs",
+    "build:helper": "node scripts/build-helper.mjs",
+    "check": "node --check lib/index.js && node --check lib/registry.js && node --check lib/helper-host.js && node --check lib/navigation.js && node --check lib/client.js"
+  },
+  "dsh": {
+    "engines": {
+      "dsh": ">=0.2.1-rc.2"
+    },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-workspace"
+      ]
+    }
+  }
+}

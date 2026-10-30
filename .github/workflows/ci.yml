@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test (macOS)
+    runs-on: macos-14
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Toolchain info
+        run: |
+          node --version
+          swiftc --version
+
+      - name: Syntax check
+        run: npm run check
+
+      - name: Compile native panel
+        run: npm run build:helper -- --out ./build
+
+      - name: Run tests
+        run: npm test
+
+      - name: Package smoke test
+        run: npm pack --dry-run

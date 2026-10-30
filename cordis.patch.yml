@@ -1,0 +1,4 @@
+# dsh-island-bridge bundle patch
+- insert:
+    - id: island-bridge
+      name: 'dsh-island-bridge'

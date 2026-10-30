@@ -1,0 +1,25 @@
+# 依赖
+node_modules/
+.pnpm-store/
+
+# 构建产物：helper 二进制、模块缓存、测试输出
+build/
+dist/
+*.dSYM/
+*.o
+
+# 运行时文件
+*.log
+*.sha256
+.DS_Store
+.env
+.env.*
+
+# 编辑器
+.idea/
+.vscode/
+*.swp
+
+# 测试与调试临时文件
+coverage/
+*.tmp

@@ -1,0 +1,37 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtemp, mkdir, writeFile, chmod, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { createHash } from 'node:crypto';
+import { setTimeout as delay } from 'node:timers/promises';
+const root=new URL('..',import.meta.url);
+async function waitFor(check){for(let i=0;i<200;i++){if(await check())return;await delay(25);}throw new Error('state timeout');}
+test('完成只发一次；较晚返回的旧标题查询不能复活已完成任务或拉起新helper',async t=>{
+ const temp=await mkdtemp(path.join(tmpdir(),'dsh-island-bridge-'));t.after(()=>rm(temp,{recursive:true,force:true}));
+ const state=path.join(temp,'dsh-island-bridge');await mkdir(state);
+ const capture=path.join(temp,'frames.jsonl');
+ const source=await readFile(new URL('helper/island-helper.swift',root));
+ await writeFile(path.join(state,'island-helper.sha256'),createHash('sha256').update(source).digest('hex').slice(0,32)+'\n');
+ const binary=path.join(state,'island-helper');
+ await writeFile(binary,`#!${process.execPath}\nimport fs from 'node:fs';\nconst file=${JSON.stringify(capture)};fs.appendFileSync(file,JSON.stringify({started:process.pid})+'\\n');process.stdout.write('{"type":"ready"}\\n');let buffer='';process.stdin.on('data',c=>{buffer+=c;while(buffer.includes('\\n')){const i=buffer.indexOf('\\n');const l=buffer.slice(0,i);buffer=buffer.slice(i+1);const f=JSON.parse(l);fs.appendFileSync(file,JSON.stringify(f)+'\\n');if(f.type==='shutdown')process.exit(0);}});process.stdin.on('end',()=>process.exit(0));\n`);
+ await chmod(binary,0o755);
+ const previous=process.env.DSH_HOME;process.env.DSH_HOME=temp;t.after(()=>{if(previous===undefined)delete process.env.DSH_HOME;else process.env.DSH_HOME=previous;});
+ const mod=await import(new URL('lib/index.js?test='+Date.now(),root));
+ const session={header:{id:'session-test',cwd:'/tmp'},seq:1};const agent={id:'session-test',status:'running',session};
+ let resolveTitles;const titlePromise=new Promise(resolve=>resolveTitles=resolve);
+ const listeners=new Map(),cleanup=[];
+ const services={agents:{list:()=>agent.status==='running'?[agent]:[],get:()=>agent},sessions:{get:()=>session},sessionProjections:{snapshot:()=>({values:{sessionListMetadata:{blank:false}}})},sessionQuery:{readTitleSnapshots:()=>titlePromise}};
+ const ctx={inject:(deps,fn)=>fn({connection:{fetch:{register:()=>()=>{}}}}),get:key=>services[key],on:(event,fn)=>{listeners.set(event,fn);return()=>listeners.delete(event);},effect:fn=>{const stop=fn();cleanup.push(stop);return stop;}};
+ t.after(()=>cleanup.reverse().forEach(stop=>stop?.()));await mod.apply(ctx);
+ const frames=async()=>{try{return(await readFile(capture,'utf8')).trim().split('\n').map(l=>JSON.parse(l));}catch{return[];}};
+ await waitFor(async()=>(await frames()).some(f=>f.sessions?.some(r=>r.id==='session-test')));
+ agent.status='idle';listeners.get('session/event')();
+ await waitFor(async()=>(await frames()).some(f=>f.completed?.some(r=>r.id==='session-test')));
+ const before=(await frames()).length;
+ resolveTitles([{status:'fulfilled',sessionId:'session-test',value:{title:{title:'旧查询的会话标题'}}}]);
+ await delay(350);
+ const all=await frames();assert.equal(all.filter(f=>f.started).length,1);
+ assert.equal(all.flatMap(f=>f.completed??[]).filter(r=>r.id==='session-test').length,1);
+ assert.ok(all.slice(before).every(f=>!f.sessions?.some(r=>r.id==='session-test')));
+});
