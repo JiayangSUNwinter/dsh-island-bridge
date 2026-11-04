@@ -2,6 +2,13 @@
 
 本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.5] - 2026-11-04
+
+- 修复岛上裁决后DSH审批卡和会话“待审批”状态残留：去掉两个独立answerer竞速，改为调用桌面现有PendingApproval.answer()，由DSH同一应答链清理状态。
+- 不修改借用的审批请求或原始AbortSignal；提问继续只镜像并在DSH回答。
+- 审批按钮经既有同源已鉴权通道发送；准备阶段绑定页面审批对象，提交前复核原请求、对象身份及唯一性，防止迟到或重复点击影响下一条审批。断线不产生授权，提示保留供重试。
+- 新增同意/拒绝双侧清理、过期、替换、重复和输入边界回归；本机还使用安装版DSH原始PendingApproval类验证同一条链路。
+
 ## [0.1.4] - 2026-10-30
 
 - 默认会话标题从完整首条消息取显示文本，避免DSH默认名称已截短导致岛内右侧空白；不修改会话本身名称。
@@ -58,3 +65,5 @@
 [0.1.3]: https://github.com/JiayangSUNwinter/dsh-island-bridge/releases/tag/v0.1.3
 [0.1.2]: https://github.com/JiayangSUNwinter/dsh-island-bridge/releases/tag/v0.1.2
 [0.1.1]: https://github.com/JiayangSUNwinter/dsh-island-bridge/commits/main
+
+[0.1.5]: https://github.com/JiayangSUNwinter/dsh-island-bridge/compare/v0.1.4...codex/fix-approval-ui-settlement

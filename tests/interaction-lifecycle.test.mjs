@@ -1,4 +1,5 @@
 import test from 'node:test';
+import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, chmod, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -28,12 +29,15 @@ async function runtime(t) {
   const state = path.join(temp, 'dsh-island-bridge');
   await mkdir(state);
   const capture = path.join(temp, 'frames.jsonl');
+  const decisions = path.join(temp, 'decisions.json');
+  await writeFile(decisions, '');
   const source = await readFile(new URL('helper/island-helper.swift', root));
   await writeFile(path.join(state, 'island-helper.sha256'), createHash('sha256').update(source).digest('hex').slice(0, 32) + '\n');
   const binary = path.join(state, 'island-helper');
   await writeFile(binary, `#!${process.execPath}
 const fs = require('node:fs');
 process.stdout.write('{"type":"ready"}\\n');
+fs.watchFile(${JSON.stringify(decisions)}, {interval:20}, () => { try { const v=fs.readFileSync(${JSON.stringify(decisions)},'utf8'); if(v) process.stdout.write(v+'\\n'); } catch {} });
 let buffer = '';
 process.stdin.on('data', chunk => {
   buffer += chunk;
@@ -56,7 +60,7 @@ process.stdin.on('end', () => process.exit(0));
   const mod = await import(new URL('lib/index.js?interaction=' + path.basename(temp), root));
   const session = { header: { id: 'session-question', cwd: '/tmp' }, seq: 1 };
   const agent = { id: session.header.id, status: 'running', session };
-  const listeners = new Map(), cleanup = [];
+  const listeners = new Map(), cleanup = [], routes = new Map();
   const services = {
     agents: { list: () => [agent], get: () => agent },
     sessions: { get: () => session },
@@ -64,7 +68,7 @@ process.stdin.on('end', () => process.exit(0));
     sessionQuery: { readTitleSnapshots: async () => [] }
   };
   const ctx = {
-    inject: (deps, fn) => fn({ connection: { fetch: { register: () => () => {} } } }),
+    inject: (deps, fn) => fn({ connection: { fetch: { register: route => { routes.set(route.path, route); return () => {}; } } } }),
     get: key => services[key],
     on: (event, fn) => { listeners.set(event, fn); return () => listeners.delete(event); },
     effect: fn => { const stop = fn(); cleanup.push(stop); return stop; }
@@ -78,7 +82,8 @@ process.stdin.on('end', () => process.exit(0));
   const row = async () => (await frames()).filter(frame => frame.type === 'update').at(-1)?.sessions.find(item => item.id === agent.id);
   await waitFor(async () => Boolean(await row()));
   return {
-    agent, frames, row,
+    agent, frames, row, routes,
+    decide: (requestId, outcome) => writeFile(decisions, JSON.stringify({type:'decision',requestId,outcome})),
     question: (request, next) => listeners.get('user-questions/request')({ agent, ...request }, next),
     approval: (request, next) => listeners.get('approval/request')({ agent, ...request }, next),
     refresh: () => listeners.get('session/event')()
@@ -169,4 +174,43 @@ test('镜像清理独立于答案类型且幂等，权限裁决不能回答提�
   assert.deepEqual(registry.dismiss(question.requestId), { accepted: false });
   assert.equal(registry.size(), 0);
   await question.answered;
+});
+
+
+test('岛上同意和拒绝走DSH同一应答对象，页面卡片、待审批状态和岛同时清除', async t => {
+  const host = await runtime(t);
+  const stops = [];
+  let registration;
+  const status = new Map();
+  const code = await readFile(new URL('lib/client.js', root), 'utf8');
+  vm.runInNewContext(code, {
+    window: { location: { protocol: 'dsh-app:' }, __ModuleLoader__: { load: r => registration = r } },
+    AbortController, Promise, Map, setTimeout, clearTimeout, console,
+    fetch: (url, options = {}) => host.routes.get(url).fetch(new Request('http://localhost' + url, options))
+  });
+  registration.factory().apply({
+    get: key => key === 'uiSession' ? { sessionStatus: { getSnapshot: () => status } } : {},
+    effect: fn => { stops.push(fn()); }
+  });
+  t.after(() => stops.forEach(stop => stop?.()));
+  for (const outcome of ['allowed-once', 'rejected']) {
+    const answer = deferred();
+    let calls = 0;
+    const pending = { kind: 'approval', key: 'approval:' + outcome, toolName: 'bash', callId: 'call-' + outcome,
+      reason: '读取配置', answerable: true,
+      answer: async value => { calls++; pending.answerable = false; answer.resolve(value); }
+    };
+    const result = host.approval({ toolName: 'bash', callId: pending.callId, reason: pending.reason }, async () => {
+      status.set(host.agent.id, { pendingInteraction: pending });
+      try { return await answer.promise; }
+      finally { status.set(host.agent.id, { pendingInteraction: undefined }); }
+    });
+    await waitFor(async () => Boolean((await host.row())?.pending));
+    await host.decide((await host.row()).pending.requestId, outcome);
+    assert.equal(await result, outcome);
+    await waitFor(async () => (await host.row())?.pending === null);
+    assert.equal(status.get(host.agent.id).pendingInteraction, undefined);
+    assert.equal(calls, 1);
+    assert.equal(host.agent.status, 'running');
+  }
 });
