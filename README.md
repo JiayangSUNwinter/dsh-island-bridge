@@ -70,13 +70,14 @@ flowchart LR
   ST -- "快照" --> BR
   BR -- "stdin JSON 行" --> P
   P -- "decision / open" --> BR
-  BR -- "settle → 原审批动词" --> AW
+  BR -- "审批按钮 → 已鉴权通道" --> CL
+  CL -- "PendingApproval.answer → 原审批动词" --> AW
   P -- "点击任务行" --> CL
   CL --> RT --> P
   CL -- "uiWorkspace.openSession" --> DSH
 ```
 
-- 桥接以 **answerer** 身份加入审批瀑布，岛上裁决与本地 UI 竞速，本地先答就用本地结果。提问只镜像到岛上并跳回 DSH 回答；答案、取消和超时保持 DSH 原有语义，交互结束立即清理岛上的提示。
+- 桥接以 **answerer** 身份加入审批瀑布，岛上的裁决通过已鉴权通道交给桌面同一个 PendingApproval.answer()，DSH 自己完成应答及界面清理。提问只镜像到岛上并跳回 DSH 回答；答案、取消和超时保持 DSH 原有语义，交互结束立即清理岛上的提示。
 - 面板通过 **stdio JSON 行**与宿主机通信；helper 二进制首次运行时由 `swiftc` 编译并按源码哈希缓存。
 - 导航复用 DSH 已有的**同源、已鉴权** Fetch 通道，不新开端口、不注册公网入口。
 
@@ -153,7 +154,7 @@ $DSH_HOME/dsh-island-bridge/island-helper.sha256 # 源码哈希缓存，源码�
 ## 隐私与安全
 
 - 数据源是 DSH **进程内**的官方接缝（审批瀑布、会话 store），不抓屏、不 hook 其他进程、不解析日志。
-- 与面板的通信只有 **stdio**；导航走 DSH 已有的同源已鉴权路由，**不监听端口、不联网、无遥测**。
+- 与面板的通信只有 **stdio**；导航与审批应答走 DSH 已有的同源已鉴权路由，**不监听端口、不联网、无遥测**。
 - 面板是**只读状态 + 审批裁决 + 跳转**，v1 不含内容输入，不能替你在会话里发 prompt。
 - 诊断日志默认关闭；开启后只落在本机 `$DSH_HOME` 下。
 
@@ -170,7 +171,7 @@ $DSH_HOME/dsh-island-bridge/island-helper.sha256 # 源码哈希缓存，源码�
 ## 开发
 
 ```bash
-npm test                      # 23 项 Node/进程/窗口/导航测试 + 55 条原生断言（需 macOS + Xcode CLT）
+npm test                      # 32 项 Node/进程/窗口/导航测试 + 55 条原生断言（需 macOS + Xcode CLT）
 npm run check                 # 只做语法检查
 npm run build:helper -- --out ./build   # 手动编译原生面板到本地 build/
 ```
@@ -184,6 +185,7 @@ npm run build:helper -- --out ./build   # 手动编译原生面板到本地 buil
 ├─ lib/index.js           # 宿主半边：审批 answerer、快照推送、helper 托管
 ├─ lib/registry.js        # 待交互注册表（permission / ask_user_question）
 ├─ lib/helper-host.js     # 单实例 helper 监督（合并重启、退避预算）
+├─ lib/approval-relay.js  # 绑定同一审批对象后提交，清理DSH与岛两侧状态
 ├─ lib/navigation.js      # 桌面端导航的 wait/ack 路由
 ├─ lib/client.js          # 桌面客户端半边：收到 open 命令后精确打开会话
 ├─ helper/island-helper.swift  # 原生 NSPanel 面板（AppKit + SwiftUI）
