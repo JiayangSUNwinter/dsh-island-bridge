@@ -38,7 +38,8 @@
     "LICENSE"
   ],
   "engines": {
-    "node": ">=22"
+    "node": ">=22",
+    "dsh": ">=0.2.2-rc.2"
   },
   "os": [
     "darwin"
@@ -49,9 +50,6 @@
     "check": "node --check lib/index.js && node --check lib/registry.js && node --check lib/helper-host.js && node --check lib/navigation.js && node --check lib/client.js && node --check lib/task-title.js && node --check lib/approval-relay.js"
   },
   "dsh": {
-    "engines": {
-      "dsh": ">=0.2.2-rc.2"
-    },
     "bundle": {
       "patch": "./cordis.patch.yml"
     },

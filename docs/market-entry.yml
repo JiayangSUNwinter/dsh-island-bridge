@@ -1,6 +1,9 @@
 # 已提交的收录条目（awesome-dsh-plugin#11251）。
 # 上游文件：data/plugins/JiayangSUNwinter__dsh-island-bridge.yml
 # 说明：README 由上游 CI 生成，提交时只加这一个文件。
+# 版本与宿主要求（engines.dsh）由上游构建时从本仓库对应 tag 的 package.json 读取，
+# 条目本身没有 version / requirements 字段，也不需要手写——发版只需打 tag。
+# 所以本文件只在分类、图标、描述变化时才需要改。
 url: https://github.com/JiayangSUNwinter/dsh-island-bridge
 name: JiayangSUNwinter/dsh-island-bridge
 category: notify
