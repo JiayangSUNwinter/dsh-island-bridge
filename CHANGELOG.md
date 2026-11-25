@@ -2,6 +2,12 @@
 
 本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.6] - 2026-11-25
+
+- 修复在 DSH ≥ 0.2.2-rc.2 上启用本插件时报错 `cannot get property "uiSession.sessionStatus" without inject`、插件无法同步（服务端启用状态保持不变）：会话状态自该版本起是独立服务 `uiSession.sessionStatus`，客户端插件改为在 Cordis `inject` 中声明它后再读取岛上待审批投影。
+- 引擎要求随之上调为 DSH `>= 0.2.2-rc.2`（此前声明 `>= 0.2.1-rc.2` 已不成立，读取会话状态需要该服务）。
+- 新增回归测试：客户端插件读到的每个服务都必须在 `inject` 中声明，避免同类“读了没声明”的问题再出现。
+
 ## [0.1.5] - 2026-11-04
 
 - 修复岛上裁决后DSH审批卡和会话“待审批”状态残留：去掉两个独立answerer竞速，改为调用桌面现有PendingApproval.answer()，由DSH同一应答链清理状态。

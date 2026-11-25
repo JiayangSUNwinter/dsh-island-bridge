@@ -5,7 +5,7 @@
 [![CI](https://github.com/JiayangSUNwinter/dsh-island-bridge/actions/workflows/ci.yml/badge.svg)](https://github.com/JiayangSUNwinter/dsh-island-bridge/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-black.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-macOS%2014%2B-black.svg)](#环境要求)
-[![DSH](https://img.shields.io/badge/DSH-%E2%89%A50.2.1--rc.2-black.svg)](#环境要求)
+[![DSH](https://img.shields.io/badge/DSH-%E2%89%A50.2.2--rc.2-black.svg)](#环境要求)
 
 ![审批卡停在刘海上：来源会话、完整命令正文、复制与「拒绝 / 同意一次」](assets/island-approval.png)
 
@@ -86,7 +86,7 @@ flowchart LR
 | 项 | 要求 |
 |---|---|
 | 系统 | macOS 14+（Apple Silicon 优先；需要带刘海的屏幕效果最佳） |
-| DSH | 桌面端 `>= 0.2.1-rc.2` |
+| DSH | 桌面端 `>= 0.2.2-rc.2`（`uiSession.sessionStatus` 自该版本起是独立服务，读取需注入） |
 | 工具链 | Xcode Command Line Tools（首次运行 `swiftc` 编译原生面板）：`xcode-select --install` |
 | Node | ≥ 22（DSH 自带运行时即可，仅测试与脚本用到） |
 
@@ -229,7 +229,7 @@ npm run build:helper -- --out ./build   # 手动编译原生面板到本地 buil
 
 - **Local only**: data flows over stdio plus DSH's existing same-origin, authenticated routes. No ports, no network, no telemetry.
 - **Approvals first**: while anything is pending the island shows only the pending queue with the full body and the same `allowed-once` / `rejected` verbs as DSH itself.
-- **Requirements**: macOS 14+, DSH desktop `>= 0.2.1-rc.2`, Xcode Command Line Tools.
+- **Requirements**: macOS 14+, DSH desktop `>= 0.2.2-rc.2`, Xcode Command Line Tools.
 
 ```bash
 dsh plugin --profile desktop add github:JiayangSUNwinter/dsh-island-bridge

@@ -113,7 +113,7 @@ Swift 原生面板（dsh-island-helper，单文件 SwiftUI / AppKit）
 ### 7.2 关键调研结论（均已在本机源码级验证）
 
 - **审批接入**：DSH 审批是瀑布事件（@deepseek-ai/dsh-user-approval），链上 answerer fail-closed；社区插件 dsh-cindy-host 已验证「以 answerer 身份加入瀑布、无人接时 next() 落回本地 UI」的模式可行（其 maker:resolve-interaction 即同一动词族）。
-- **状态接入**：DSH ≥ 0.1.6 的 sessionStatus store（Map<会话, {running, pendingInteraction, completionUnread}>）可经 ctx.get("uiSession") 读取并 subscribe（dsh-notify-me 生产实现验证）。
+- **状态接入**：DSH ≥ 0.1.6 的 sessionStatus store（Map<会话, {running, pendingInteraction, completionUnread}>）可经 ctx.get("uiSession") 读取并 subscribe（dsh-notify-me 生产实现验证）。注意：自 0.2.2-rc.2 起 `uiSession.sessionStatus` 是独立服务名，读取它的插件必须在 Cordis `inject` 里声明该完整名字，否则报 `cannot get property "uiSession.sessionStatus" without inject`（见 CHANGELOG 0.1.6）。
 - **本地路由**：宿主插件可用 ctx.inject(["webServer"]) 注册精确路由；回环围栏采用 notify-me 的 gateRequest 模式（回环对端 + 回环 Host + Origin 同源校验，防 DNS 重绑定）。
 - **原生面板**：Cindy 的 AgentIslandPanel（NSPanel，canBecomeKey / Main = false）+ NSScreen.safeAreaInsets 刘海几何 + 逐屏 displayId 方案，源码级验证可行（240KB 单文件 Swift 已存档于 /tmp/cindy-review/）。
 - **宿主进程形态**：DSH 宿主插件运行于 Electron 的子 Node 进程（非主进程），无法直接创建 BrowserWindow——原生 Swift helper 是系统级面板的必要路径（notify-me 在 Windows 用 PowerShell 抬窗亦同因）。
